@@ -1,6 +1,8 @@
 # Merge Gatekeeper
 
-Merge Gatekeeper provides extra control for Pull Request management.
+Merge Gatekeeper provides extra control for Pull Request management. 
+
+> This fork was created to eliminate the dependency on Docker and to address the [Docker rate limits](https://github.com/surgeventures/merge-gatekeeper/pull/70) we were experiencing when using this action. 
 
 ## 🌄 What Does Merge Gatekeeper Provide, and Why?
 
@@ -32,7 +34,7 @@ The easiest approach is to copy the standard definition, and save it under `.git
 #### With `curl`
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/upsidr/merge-gatekeeper/main/example/merge-gatekeeper.yml \
+curl -sSL https://raw.githubusercontent.com/surgeventures/merge-gatekeeper/main/example/merge-gatekeeper.yml \
   > .github/workflows/merge-gatekeeper.yml
 ```
 
@@ -62,9 +64,9 @@ jobs:
     steps:
       - name: Run Merge Gatekeeper
         # NOTE: v1 is updated to reflect the latest v1.x.y. Please use any tag/branch that suits your needs:
-        #       https://github.com/upsidr/merge-gatekeeper/tags
-        #       https://github.com/upsidr/merge-gatekeeper/branches
-        uses: upsidr/merge-gatekeeper@v1
+        #       https://github.com/surgeventures/merge-gatekeeper/tags
+        #       https://github.com/surgeventures/merge-gatekeeper/branches
+        uses: surgeventures/merge-gatekeeper@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 ```
