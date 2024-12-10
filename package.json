@@ -2,11 +2,11 @@
     "name": "@surgeventures/merge-gatekeeper",
     "version": "1.0.0",
     "private": true,
-    "main": "dist/index.js",
+    "main": "invoke-binary.js",
     "scripts": {
-      "package": "yarn go:package && yarn js:package",
+      "package": "rm -rf ./dist && yarn js:package && yarn go:package",
       "go:package": "echo 'build binaries' && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags=\"-w -s\" -o ./dist/action-linux-amd64 main.go && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -a -installsuffix cgo -ldflags=\"-w -s\" -o ./dist/action-linux-arm64 main.go",
-      "js:package": "ncc build invoke-binary.js",
+      "js:package": "echo 'build bundle js' && ncc build invoke-binary.js",
       "readme": "action-docs -un -t 1",
       "fmt": "go fmt  ./...",
       "test": "go test -v  ./..."

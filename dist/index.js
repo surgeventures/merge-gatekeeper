@@ -27589,9 +27589,16 @@ function chooseBinary() {
         core.notice("Linux ARM64 binary selected")
         return `action-linux-arm64`
     }
-} 
+}
+
+let pathToBinaries = `${__dirname}`
+if (__filename.split("/").pop() === "invoke-binary.js") {
+    core.notice("Running invoke-binary.js")
+    pathToBinaries = `${__dirname}/dist`
+}
+
 const binary = chooseBinary()
-const mainScript = `${__dirname}/dist/${binary} validate --token="${core.getInput('token')}" --self="${core.getInput('self')}" --interval="${core.getInput('interval')}" --ref="${core.getInput('ref')}" --timeout="${core.getInput('timeout')}" --ignored="${core.getInput('ignored')}"`
+const mainScript = `${pathToBinaries}/${binary} validate --token="${core.getInput('token')}" --self="${core.getInput('self')}" --interval="${core.getInput('interval')}" --ref="${core.getInput('ref')}" --timeout="${core.getInput('timeout')}" --ignored="${core.getInput('ignored')}"`
 const spawnSyncReturns = childProcess.spawnSync(mainScript, { 
     stdio: 'inherit',
     shell: true,

@@ -31,4 +31,4 @@ inputs:
 
 runs:
   using: 'node20'
-  main: 'invoke-binary.js'
+  main: 'dist/index.js'
