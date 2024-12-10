@@ -1,0 +1,24 @@
+---
+name: Merge Gatekeeper
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  merge-gatekeeper:
+    runs-on: ubuntu-latest
+    permissions:
+      checks: read
+      statuses: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Run Merge Gatekeeper
+        uses: ./
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
