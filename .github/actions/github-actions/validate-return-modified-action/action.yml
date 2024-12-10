@@ -50,6 +50,14 @@ runs:
             changedFiles.forEach(file => {
                 let currentDir = path.dirname(file);
 
+                // Check the current directory first
+                if (
+                    fs.existsSync(path.join(currentDir, 'action.yml')) ||
+                    fs.existsSync(path.join(currentDir, 'action.yaml'))
+                ) {
+                    modifiedActionDirs.add(currentDir === '.' ? '.' : currentDir);
+                }
+
                 // Walk up directory tree until we find action.yml/yaml or reach root
                 while (currentDir !== '.' && currentDir !== '/') {
                     if (
