@@ -120,7 +120,7 @@ runs:
               action_path: action.action,
               version: action.version,
               release_type: releaseType,
-              branch_name: `${action.version}-${releaseType}-${action.action.replace('/', '-').replace('\\', '-')}`
+              branch_name: action.action == '.' ? `${action.version}-${releaseType}-${context.repo.repo}` : `${action.version}-${releaseType}-${action.action.replace('/', '-').replace('\\', '-')}`
             };
           });
 
@@ -141,7 +141,7 @@ runs:
               git checkout ${{ inputs.base_branch }}
               git pull
               git checkout -b $version
-              git push -u origin $version
+              git push -u origin "refs/heads/$version"
             else
               echo "Version branch $version exists remotely, checking out"
               git checkout $version
