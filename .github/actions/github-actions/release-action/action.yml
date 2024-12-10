@@ -140,8 +140,8 @@ runs:
             if ! git show-ref --quiet origin/$version; then
               git checkout -b ${{ inputs.base_branch }} origin/${{ inputs.base_branch }}
               git pull
-              git checkout -b $version origin/$version
-              git push origin $version
+              git checkout -b $version
+              git push origin -u $version
             else
               echo "Version branch $version exists remotely, checking out"
               git checkout -b $version origin/$version
