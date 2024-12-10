@@ -1,0 +1,19 @@
+name: Validate PR Changes for Action Release
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate action changes
+        uses: ./.github/actions/github-actions/release-action
+        with:
+          mode: check
+          base_branch: base
+          main_branch: main

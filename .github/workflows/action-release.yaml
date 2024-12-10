@@ -1,0 +1,19 @@
+name: Create Action Release
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Release action changes
+        uses: ./.github/actions/github-actions/release-action
+        with:
+          mode: release
+          base_branch: base
+          main_branch: main

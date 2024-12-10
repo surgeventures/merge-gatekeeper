@@ -1,0 +1,122 @@
+name: 'Find Modified Action'
+description: 'Finds the GitHub Action directory that was modified in the provided list of changed files'
+
+inputs:
+  changed_files:
+    description: 'List of changed files'
+    required: true
+
+outputs:
+  modified_action:
+    description: 'Path to the modified action directory'
+    value: ${{ steps.find-action.outputs.modified_action }}
+  
+  error:
+    description: 'Error message if the action directory validation failed'
+    value: ${{ steps.find-action.outputs.error }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Install Semver
+      shell: bash
+      run: |
+        # Install semver in a separate directory to avoid polluting the git branch
+        mkdir -p /tmp/action_node_modules
+        npm install semver --prefix /tmp/action_node_modules
+        echo "NODE_PATH=/tmp/action_node_modules/node_modules" >> $GITHUB_ENV
+
+    - name: Find and validate action directory
+      id: find-action
+      uses: actions/github-script@v7
+      env:
+        NODE_PATH: /tmp/action_node_modules/node_modules
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          const semver = require('semver');
+
+          function findModifiedActionDir(changedFiles) {
+            /* For all changed files, find if they are part of an action directory 
+            and return the set of all unique action directories */
+
+            const modifiedActionDirs = new Set();
+            changedFiles.forEach(file => {
+                let currentDir = path.dirname(file);
+
+                // Walk up directory tree until we find action.yml/yaml or reach root
+                while (currentDir !== '.' && currentDir !== '/') {
+                    if (
+                        fs.existsSync(path.join(currentDir, 'action.yml')) ||
+                        fs.existsSync(path.join(currentDir, 'action.yaml'))
+                    ) {
+                        modifiedActionDirs.add(currentDir);
+                        break;
+                    }
+                    currentDir = path.dirname(currentDir);
+                }
+            });
+
+            return modifiedActionDirs;
+          }
+
+          function validateActionDir(actionDir) {
+            /* Validate action directory's package.json */
+
+            // Validate package.json exists
+            if (!fs.existsSync(path.join(actionDir, 'package.json'))) {
+              throw new Error('The action directory does not contain package.json file');
+            }
+
+            // Validate package.json content
+            try {
+              const packageJson = JSON.parse(fs.readFileSync(path.join(actionDir, 'package.json'), 'utf8'));
+              if (!packageJson.version) {
+                throw new Error('The package.json file does not contain a version field');
+              }
+              if (!semver.valid(packageJson.version)) {
+                throw new Error('The package.json file contains an invalid version field');
+              }
+            } catch (error) {
+              throw new Error(`Package.json validation failed: ${error.message}`);
+            }
+          }
+
+          let changedFiles = `${{ inputs.changed_files }}`.split(' ');
+
+          const modifiedActionDirs = findModifiedActionDir(changedFiles);
+          // Exit if there are no modified action directories
+          if (modifiedActionDirs.size === 0) {
+            console.log('No action to release');
+            return;
+          }
+
+          for (const targetActionDir of modifiedActionDirs) {
+            try {
+              validateActionDir(targetActionDir);
+            } catch (error) {
+              core.setFailed(error.message);
+              core.setOutput('error', error.message);
+              return;
+            }
+          }
+
+          // Get the action directory and version
+          const actionDirsOutput = Array.from(modifiedActionDirs).map(
+            dir => {
+              const packageJson = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'));
+              return { 
+                "action": dir, 
+                "version": semver.prerelease(packageJson.version) ? semver.prerelease(packageJson.version)[0] : "v" + semver.major(packageJson.version) 
+              }
+            }
+          );
+
+          // Set the output
+          core.setOutput('modified_action', JSON.stringify(actionDirsOutput));
