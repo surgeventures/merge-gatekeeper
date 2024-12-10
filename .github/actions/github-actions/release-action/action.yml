@@ -136,7 +136,7 @@ runs:
           branch_name=$(echo $info | jq -r '.branch_name')
           action_path=$(echo $info | jq -r '.action_path')
           release_type=$(echo $info | jq -r '.release_type')
-          if ! git rev-parse --quiet --verify $version; then
+          if ! git rev-parse --quiet --verify refs/heads/$version; then
             if ! git ls-remote --heads origin $version | grep -q $version; then
               git checkout ${{ inputs.base_branch }}
               git pull
