@@ -136,15 +136,15 @@ runs:
           branch_name=$(echo $info | jq -r '.branch_name')
           action_path=$(echo $info | jq -r '.action_path')
           release_type=$(echo $info | jq -r '.release_type')
-          if ! git show-ref --quiet refs/heads/$version; then
-            if ! git show-ref --quiet origin/$version; then
-              git checkout -b ${{ inputs.base_branch }} origin/${{ inputs.base_branch }}
+          if ! git rev-parse --quiet --verify $version; then
+            if ! git ls-remote --heads origin $version | grep -q $version; then
+              git checkout ${{ inputs.base_branch }}
               git pull
               git checkout -b $version
-              git push origin -u $version
+              git push -u origin $version
             else
               echo "Version branch $version exists remotely, checking out"
-              git checkout -b $version origin/$version
+              git checkout $version
               git pull
             fi
           else
@@ -161,7 +161,7 @@ runs:
           git checkout origin/${{ inputs.main_branch }} -- $action_path
           git add .
           git commit -m "[$release_type] $version for $action_path"
-          git push origin $branch_name
+          git push -u origin $branch_name
         done
 
     - name: Create pull requests
