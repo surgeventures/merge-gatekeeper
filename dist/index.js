@@ -27598,7 +27598,7 @@ if (__filename.split("/").pop() === "invoke-binary.js") {
 }
 
 const binary = chooseBinary()
-const mainScript = `${pathToBinaries}/${binary} validate --token="${core.getInput('token')}" --self="${core.getInput('self')}" --interval="${core.getInput('interval')}" --ref="${core.getInput('ref')}" --timeout="${core.getInput('timeout')}" --ignored="${core.getInput('ignored')}"`
+const mainScript = `${pathToBinaries}/${binary} validate --token="${core.getInput('token')}" --self="${core.getInput('self')}" --interval="${core.getInput('interval')}" --ref="${core.getInput('ref')}" --timeout="${core.getInput('timeout')}" --ignored="${core.getInput('ignored')}" --required="${core.getInput('required')}"`
 const spawnSyncReturns = childProcess.spawnSync(mainScript, { 
     stdio: 'inherit',
     shell: true,
