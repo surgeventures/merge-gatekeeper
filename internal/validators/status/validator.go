@@ -106,6 +106,7 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 		completeJobs: make([]string, 0, len(ghaStatuses)),
 		errJobs:      make([]string, 0, len(ghaStatuses)/2),
 		ignoredJobs:  make([]string, 0, len(ghaStatuses)),
+		completeRequiredJobs: make([]string, 0, len(sv.requiredJobs)),
 		succeeded:    true,
 	}
 
@@ -144,6 +145,7 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 			successCnt++
 			if isRequiredJob {
 				requiredJobsSuccessCnt++
+				st.completeRequiredJobs = append(st.completeRequiredJobs, ghaStatus.Job)
 			}
 		case errorState, failureState:
 			st.errJobs = append(st.errJobs, ghaStatus.Job)
