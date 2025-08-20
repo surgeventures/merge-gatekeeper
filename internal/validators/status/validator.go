@@ -106,11 +106,13 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 		completeJobs: make([]string, 0, len(ghaStatuses)),
 		errJobs:      make([]string, 0, len(ghaStatuses)/2),
 		ignoredJobs:  make([]string, 0, len(ghaStatuses)),
+		requiredJobs: make([]string, 0, len(sv.requiredJobs)),
 		completeRequiredJobs: make([]string, 0, len(sv.requiredJobs)),
 		succeeded:    true,
 	}
 
 	st.ignoredJobs = append(st.ignoredJobs, sv.ignoredJobs...)
+	st.requiredJobs = append(st.requiredJobs, sv.requiredJobs...)
 
 	var successCnt int
 	var requiredJobsSuccessCnt int
