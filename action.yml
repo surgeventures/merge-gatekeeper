@@ -24,6 +24,10 @@ inputs:
     description: "set ignored jobs (comma-separated list)"
     required: false
     default: ""
+  required:
+    description: "set required jobs that must be successful (comma-separated list)"
+    required: false
+    default: ""
   ref:
     description: "set ref of github repository. the ref can be a SHA, a branch name, or tag name"
     required: false
