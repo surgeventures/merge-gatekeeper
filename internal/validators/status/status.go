@@ -7,6 +7,8 @@ type status struct {
 	completeJobs []string
 	errJobs      []string
 	ignoredJobs  []string
+	requiredJobs         []string
+	completeRequiredJobs []string
 	succeeded    bool
 }
 
@@ -25,6 +27,28 @@ func prettyPrintJobList(jobs []string) string {
 	return result
 }
 
+func prettyPrintRequiredJobList(requiredJobs []string, completeRequiredJobs []string) string {
+	result := ""
+	if len(requiredJobs) == 0 {
+		result = "[]"
+	}
+	for i, job := range requiredJobs {
+		var checkmark string
+		for _, complete := range completeRequiredJobs {
+			if job == complete {
+				checkmark = "✅"
+				break
+			}
+		}
+		result += fmt.Sprintf("- %s %s", job, checkmark)
+		if i != len(requiredJobs)-1 {
+			result += "\n"
+		}
+	}
+
+	return result
+}
+
 func (s *status) Detail() string {
 	result := fmt.Sprintf(
 		`%d out of %d
@@ -34,6 +58,7 @@ Completed job count:   %d
 Incompleted job count: %d
 Failed job count:      %d
 Ignored job count:     %d
+Required job count:    %d
 `,
 		len(s.completeJobs), len(s.totalJobs),
 		len(s.totalJobs),
@@ -41,6 +66,7 @@ Ignored job count:     %d
 		len(s.getIncompleteJobs()),
 		len(s.errJobs),
 		len(s.ignoredJobs),
+		len(s.requiredJobs),
 	)
 
 	result = fmt.Sprintf(`%s
@@ -60,6 +86,10 @@ Ignored job count:     %d
 %s
 ::endgroup::
 
+::group::Required jobs
+%s
+::endgroup::
+
 ::group::All jobs
 %s
 ::endgroup::
@@ -69,6 +99,7 @@ Ignored job count:     %d
 		prettyPrintJobList(s.completeJobs),
 		prettyPrintJobList(s.getIncompleteJobs()),
 		prettyPrintJobList(s.ignoredJobs),
+		prettyPrintRequiredJobList(s.requiredJobs, s.completeRequiredJobs),
 		prettyPrintJobList(s.totalJobs),
 	)
 

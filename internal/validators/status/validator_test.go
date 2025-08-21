@@ -151,13 +151,14 @@ func TestName(t *testing.T) {
 
 func Test_statusValidator_Validate(t *testing.T) {
 	type test struct {
-		selfJobName string
-		ignoredJobs []string
-		client      github.Client
-		ctx         context.Context
-		wantErr     bool
-		wantErrStr  string
-		wantStatus  validators.Status
+		selfJobName  string
+		ignoredJobs  []string
+		requiredJobs []string
+		client       github.Client
+		ctx          context.Context
+		wantErr      bool
+		wantErrStr   string
+		wantStatus   validators.Status
 	}
 	tests := map[string]test{
 		"returns error when listGhaStatuses return an error": {
@@ -181,11 +182,13 @@ func Test_statusValidator_Validate(t *testing.T) {
 			},
 			wantErr: false,
 			wantStatus: &status{
-				succeeded:    true,
-				totalJobs:    []string{},
-				completeJobs: []string{},
-				ignoredJobs:  []string{},
-				errJobs:      []string{},
+				succeeded:            true,
+				totalJobs:            []string{},
+				completeJobs:         []string{},
+				ignoredJobs:          []string{},
+				errJobs:              []string{},
+				requiredJobs:         []string{},
+				completeRequiredJobs: []string{},
 			},
 		},
 		"returns succeeded status and nil when there is one job, which is itself": {
@@ -207,11 +210,13 @@ func Test_statusValidator_Validate(t *testing.T) {
 			},
 			wantErr: false,
 			wantStatus: &status{
-				succeeded:    true,
-				totalJobs:    []string{},
-				completeJobs: []string{},
-				ignoredJobs:  []string{},
-				errJobs:      []string{},
+				succeeded:            true,
+				totalJobs:            []string{},
+				completeJobs:         []string{},
+				ignoredJobs:          []string{},
+				errJobs:              []string{},
+				requiredJobs:         []string{},
+				completeRequiredJobs: []string{},
 			},
 		},
 		"returns failed status and nil when there is one job": {
@@ -232,11 +237,13 @@ func Test_statusValidator_Validate(t *testing.T) {
 			},
 			wantErr: false,
 			wantStatus: &status{
-				succeeded:    false,
-				totalJobs:    []string{"job"},
-				completeJobs: []string{},
-				ignoredJobs:  []string{},
-				errJobs:      []string{},
+				succeeded:            false,
+				totalJobs:            []string{"job"},
+				completeJobs:         []string{},
+				ignoredJobs:          []string{},
+				errJobs:              []string{},
+				requiredJobs:         []string{},
+				completeRequiredJobs: []string{},
 			},
 		},
 		"returns error when there is a failed job": {
@@ -275,7 +282,9 @@ func Test_statusValidator_Validate(t *testing.T) {
 				errJobs: []string{
 					"job-02",
 				},
-				ignoredJobs: []string{},
+				ignoredJobs:          []string{},
+				requiredJobs:         []string{},
+				completeRequiredJobs: []string{},
 			}).Detail(),
 		},
 		"returns error when there is a failed job with failure state": {
@@ -314,7 +323,9 @@ func Test_statusValidator_Validate(t *testing.T) {
 				errJobs: []string{
 					"job-02",
 				},
-				ignoredJobs: []string{},
+				ignoredJobs:          []string{},
+				requiredJobs:         []string{},
+				completeRequiredJobs: []string{},
 			}).Detail(),
 		},
 		"returns failed status and nil when successful job count is less than total": {
@@ -352,8 +363,10 @@ func Test_statusValidator_Validate(t *testing.T) {
 				completeJobs: []string{
 					"job-01",
 				},
-				errJobs:     []string{},
-				ignoredJobs: []string{},
+				errJobs:              []string{},
+				ignoredJobs:          []string{},
+				requiredJobs:         []string{},
+				completeRequiredJobs: []string{},
 			},
 		},
 		"returns succeeded status and nil when validation is success": {
@@ -392,8 +405,10 @@ func Test_statusValidator_Validate(t *testing.T) {
 					"job-01",
 					"job-02",
 				},
-				errJobs:     []string{},
-				ignoredJobs: []string{},
+				errJobs:              []string{},
+				ignoredJobs:          []string{},
+				requiredJobs:         []string{},
+				completeRequiredJobs: []string{},
 			},
 		},
 		"returns succeeded status and nil when only an ignored job is failing": {
@@ -424,11 +439,13 @@ func Test_statusValidator_Validate(t *testing.T) {
 			},
 			wantErr: false,
 			wantStatus: &status{
-				succeeded:    true,
-				totalJobs:    []string{"job-01"},
-				completeJobs: []string{"job-01"},
-				errJobs:      []string{},
-				ignoredJobs:  []string{"job-02", "job-03"},
+				succeeded:            true,
+				totalJobs:            []string{"job-01"},
+				completeJobs:         []string{"job-01"},
+				errJobs:              []string{},
+				ignoredJobs:          []string{"job-02", "job-03"},
+				requiredJobs:         []string{},
+				completeRequiredJobs: []string{},
 			},
 		},
 		"returns succeeded status and nil when only an ignored job is failing, with failure state": {
@@ -459,20 +476,142 @@ func Test_statusValidator_Validate(t *testing.T) {
 			},
 			wantErr: false,
 			wantStatus: &status{
-				succeeded:    true,
-				totalJobs:    []string{"job-01"},
-				completeJobs: []string{"job-01"},
-				errJobs:      []string{},
-				ignoredJobs:  []string{"job-02", "job-03"},
+				succeeded:            true,
+				totalJobs:            []string{"job-01"},
+				completeJobs:         []string{"job-01"},
+				errJobs:              []string{},
+				ignoredJobs:          []string{"job-02", "job-03"},
+				requiredJobs:         []string{},
+				completeRequiredJobs: []string{},
 			},
 		},
+		"returns succeeded status and nil when there is a required job and completed jobs contains it": {
+			selfJobName: "self-job",
+			requiredJobs: []string{"job-01"},
+			client: &mock.Client{
+				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
+					return &github.CombinedStatus{
+						Statuses: []*github.RepoStatus{
+							{
+								Context: stringPtr("job-01"),
+								State:   stringPtr(successState),
+							},
+						},
+					}, nil, nil
+				},
+				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
+					return &github.ListCheckRunsResults{}, nil, nil
+				},
+			},
+			wantErr: false,
+			wantStatus: &status{
+				succeeded:            true,
+				totalJobs:            []string{"job-01"},
+				completeJobs:         []string{"job-01"},
+				errJobs:              []string{},
+				ignoredJobs:          []string{},
+				requiredJobs:         []string{"job-01"},
+				completeRequiredJobs: []string{"job-01"},
+			},
+		},
+		"returns failed status and nil when there is a required job and completed jobs does not contain it": {
+			selfJobName: "self-job",
+			requiredJobs: []string{"job-02"},
+			client: &mock.Client{
+				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
+					return &github.CombinedStatus{
+						Statuses: []*github.RepoStatus{
+							{
+								Context: stringPtr("job-01"),
+								State:   stringPtr(successState),
+							},
+						},
+					}, nil, nil
+				},
+				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
+					return &github.ListCheckRunsResults{}, nil, nil
+				},
+			},
+			wantErr: false,
+			wantStatus: &status{
+				succeeded:            false,
+				totalJobs:            []string{"job-01"},
+				completeJobs:         []string{"job-01"},
+				errJobs:              []string{},
+				ignoredJobs:          []string{},
+				requiredJobs:         []string{"job-02"},
+				completeRequiredJobs: []string{},
+			},
+		},
+		"returns error when there is a required job which is also an ignored job and it fails": {
+			selfJobName: "self-job",
+			requiredJobs: []string{"job-01"},
+			ignoredJobs: []string{"job-01"},
+			client: &mock.Client{
+				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
+					return &github.CombinedStatus{
+						Statuses: []*github.RepoStatus{
+							{
+								Context: stringPtr("job-01"),
+								State:   stringPtr(failureState),
+							},
+						},
+					}, nil, nil
+				},
+				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
+					return &github.ListCheckRunsResults{}, nil, nil
+				},
+			},
+			wantErr: true,
+			wantErrStr: (&status{
+				succeeded:            false,
+				totalJobs:            []string{"job-01"},
+				completeJobs:         []string{},
+				errJobs:              []string{"job-01"},
+				ignoredJobs:          []string{"job-01"},
+				requiredJobs:         []string{"job-01"},
+				completeRequiredJobs: []string{},
+			}).Detail(),
+		},
+		"returns failed status and nil when there is a required job which is also an ignored job and completed jobs does not contain it": {
+			selfJobName: "self-job",
+			requiredJobs: []string{"job-02"},
+			ignoredJobs: []string{"job-02"},
+			client: &mock.Client{
+				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
+					return &github.CombinedStatus{
+						Statuses: []*github.RepoStatus{
+							{
+								Context: stringPtr("job-01"),
+								State:   stringPtr(successState),
+							},
+						},
+					}, nil, nil
+				},
+				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
+					return &github.ListCheckRunsResults{}, nil, nil
+				},
+			},
+			wantErr: false,
+			wantStatus: &status{
+				succeeded:            false,
+				totalJobs:            []string{"job-01"},
+				completeJobs:         []string{"job-01"},
+				errJobs:              []string{},
+				ignoredJobs:          []string{"job-02"},
+				requiredJobs:         []string{"job-02"},
+				completeRequiredJobs: []string{},
+			},
+		},
+
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			sv := &statusValidator{
-				selfJobName: tt.selfJobName,
-				ignoredJobs: tt.ignoredJobs,
-				client:      tt.client,
+				selfJobName:  tt.selfJobName,
+				ignoredJobs:  tt.ignoredJobs,
+				requiredJobs: tt.requiredJobs,
+				client:       tt.client,
 			}
 			got, err := sv.Validate(tt.ctx)
 			if (err != nil) != tt.wantErr {

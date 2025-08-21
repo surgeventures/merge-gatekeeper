@@ -43,12 +43,13 @@ type ghaStatus struct {
 }
 
 type statusValidator struct {
-	repo        string
-	owner       string
-	ref         string
-	selfJobName string
-	ignoredJobs []string
-	client      github.Client
+	repo         string
+	owner        string
+	ref          string
+	selfJobName  string
+	ignoredJobs  []string
+	requiredJobs []string
+	client       github.Client
 }
 
 func CreateValidator(c github.Client, opts ...Option) (validators.Validator, error) {
@@ -105,12 +106,16 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 		completeJobs: make([]string, 0, len(ghaStatuses)),
 		errJobs:      make([]string, 0, len(ghaStatuses)/2),
 		ignoredJobs:  make([]string, 0, len(ghaStatuses)),
+		requiredJobs: make([]string, 0, len(sv.requiredJobs)),
+		completeRequiredJobs: make([]string, 0, len(sv.requiredJobs)),
 		succeeded:    true,
 	}
 
 	st.ignoredJobs = append(st.ignoredJobs, sv.ignoredJobs...)
+	st.requiredJobs = append(st.requiredJobs, sv.requiredJobs...)
 
 	var successCnt int
+	var requiredJobsSuccessCnt int
 	for _, ghaStatus := range ghaStatuses {
 		var toIgnore bool
 		for _, ignored := range sv.ignoredJobs {
@@ -120,8 +125,16 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 			}
 		}
 
+		var isRequiredJob bool
+		for _, required := range sv.requiredJobs {
+			if ghaStatus.Job == required {
+				isRequiredJob = true
+				break
+			}
+		}
+
 		// Ignored jobs and this job itself should be considered as success regardless of their statuses.
-		if toIgnore || ghaStatus.Job == sv.selfJobName {
+		if (!isRequiredJob && toIgnore) || ghaStatus.Job == sv.selfJobName {
 			successCnt++
 			continue
 		}
@@ -132,6 +145,10 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 		case successState:
 			st.completeJobs = append(st.completeJobs, ghaStatus.Job)
 			successCnt++
+			if isRequiredJob {
+				requiredJobsSuccessCnt++
+				st.completeRequiredJobs = append(st.completeRequiredJobs, ghaStatus.Job)
+			}
 		case errorState, failureState:
 			st.errJobs = append(st.errJobs, ghaStatus.Job)
 		}
@@ -145,8 +162,14 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 		return st, nil
 	}
 
+	if len(sv.requiredJobs) != requiredJobsSuccessCnt {
+		st.succeeded = false
+		return st, nil
+	}
+
 	return st, nil
 }
+
 
 func (sv *statusValidator) getCombinedStatus(ctx context.Context) ([]*github.RepoStatus, error) {
 	var combined []*github.RepoStatus

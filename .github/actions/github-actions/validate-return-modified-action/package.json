@@ -1,0 +1,5 @@
+{
+    "name": "validate-return-modified-action",
+    "version": "0.0.2-beta",
+    "description": "Finds the GitHub Action directory that was modified in the provided list of changed files"
+}
