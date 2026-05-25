@@ -1,0 +1,73 @@
+version: 1
+generated_at: 2026-05-25T13:23:38Z
+internal: []
+trusted:
+  - action: actions/checkout
+    refs:
+      - v2
+      - v4
+    occurrences:
+      v4:
+        .github/actions/github-actions/release-action/action.yml:
+          - runs.steps.[0].uses
+        .github/workflows/action-release copy.yaml:
+          - jobs.check-changes.steps.[0].uses
+        .github/workflows/action-release.yaml:
+          - jobs.create-release.steps.[0].uses
+      v2:
+        .github/workflows/build-ci.yaml:
+          - jobs.build.steps.[0].uses
+        .github/workflows/merge-gatekeeper-latest.yaml:
+          - jobs.merge-gatekeeper.steps.[0].uses
+  - action: actions/github-script
+    refs:
+      - v7
+    occurrences:
+      v7:
+        .github/actions/github-actions/release-action/action.yml:
+          - runs.steps.[5].uses
+          - runs.steps.[6].uses
+          - runs.steps.[7].uses
+        .github/actions/github-actions/validate-return-modified-action/action.yml:
+          - runs.steps.[2].uses
+  - action: actions/setup-go
+    refs:
+      - v1
+    occurrences:
+      v1:
+        .github/workflows/build-ci.yaml:
+          - jobs.build.steps.[1].uses
+  - action: actions/setup-node
+    refs:
+      - v4
+    occurrences:
+      v4:
+        .github/actions/github-actions/release-action/action.yml:
+          - runs.steps.[2].uses
+        .github/actions/github-actions/validate-return-modified-action/action.yml:
+          - runs.steps.[0].uses
+external:
+  - action: tj-actions/changed-files
+    refs:
+      - v45
+    occurrences:
+      v45:
+        .github/actions/github-actions/release-action/action.yml:
+          - runs.steps.[1].uses
+local:
+  - path: ./
+    occurrences:
+      .github/workflows/merge-gatekeeper-latest.yaml:
+        - jobs.merge-gatekeeper.steps.[1].uses
+  - path: ./.github/actions/github-actions/release-action
+    occurrences:
+      .github/workflows/action-release copy.yaml:
+        - jobs.check-changes.steps.[1].uses
+      .github/workflows/action-release.yaml:
+        - jobs.create-release.steps.[1].uses
+  - path: ./.github/actions/github-actions/validate-return-modified-action
+    occurrences:
+      .github/actions/github-actions/release-action/action.yml:
+        - runs.steps.[4].uses
+docker: []
+dynamic: []
