@@ -1,0 +1,5 @@
+{
+    "name": "release-action",
+    "version": "0.0.2-beta",
+    "description": "Manages GitHub Action releases by validating changes and creating release PRs"
+}
